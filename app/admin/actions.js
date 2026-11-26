@@ -48,6 +48,25 @@ export async function keluarAdmin() {
 }
 
 export async function gantiPassword(_stateSebelumnya, formData) {
+  let supabase;
+
+  try {
+    supabase = await buatClientSesi();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "Sesi tidak valid. Silakan masuk kembali sebagai admin." };
+    }
+  } catch (err) {
+    console.error("Gagal memeriksa sesi admin:", err);
+    return {
+      error: "Gagal terhubung ke server autentikasi. Pastikan konfigurasi koneksi sudah benar.",
+    };
+  }
+
   const passwordBaru = String(formData.get("password_baru") ?? "");
   const konfirmasi = String(formData.get("konfirmasi_password") ?? "");
 
@@ -60,16 +79,6 @@ export async function gantiPassword(_stateSebelumnya, formData) {
   }
 
   try {
-    const supabase = await buatClientSesi();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return { error: "Sesi tidak valid. Silakan masuk kembali sebagai admin." };
-    }
-
     const { error } = await supabase.auth.updateUser({
       password: passwordBaru,
     });
